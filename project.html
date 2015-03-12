@@ -180,6 +180,8 @@ hljs.initHighlightingOnLoad();
 <body>
 <h1>Machine Learning Course Project</h1>
 
+<p>by Steve Friedman  </p>
+
 <p>Note to graders: A pdf output file has been included in this github repository in case you have trouble viewing the html page online.</p>
 
 <h1>Overview</h1>
@@ -367,17 +369,12 @@ confusionMatrix(validationData$classe, prediction)
 
 <h1>Evaluation</h1>
 
-<p>Use the model to predict outcomes for the original test dataset</p>
+<p>Use the model to predict a vector of outcomes for the original test dataset</p>
 
 <pre><code class="r">finalPrediction &lt;- predict(model, testing[, -length(names(testing))]) #remove the problem_id field from the prediction
-finalPrediction
 </code></pre>
 
-<pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
-## Levels: A B C D E
-</code></pre>
-
-<p>The model was subsequently compared to the origina test dataset.  It correctly predicted the outcome in all 20 cases.</p>
+<p>The final Predictions were subsequently compared to the original test dataset.  They correctly predicted the outcome in all 20 cases.</p>
 
 </body>
 
