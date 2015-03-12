@@ -1,0 +1,83 @@
+Machine Learning Course Project
+========================================================
+Note to graders: A pdf output file has been included in this github repository in case you have trouble viewing the html page online.
+# Overview  
+In this project we will use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants.
+The goal of the project is to predict the manner in which they did the exercise.  
+
+````{r}
+library(lattice)
+library(ggplot2)
+library(caret)
+```
+# Input Data
+```{r}
+# load the training data
+urlfile<-'http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv'
+training<-read.csv(urlfile)
+
+
+#load the testing data
+urlfile<-'http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv'
+testing<-read.csv(urlfile)
+```
+ 
+# Cleaning Data
+A quick visual inspection of the training and testing datasets shows that columns typically have a lot of NA values or hardly any NA values.  We will filter out columns that have 95%  or more of their values set to NA in the training data
+```{r}
+testing <- testing[, colSums(is.na(training)) < .95*nrow(training) ]
+training <- training[, colSums(is.na(training)) < .95*nrow(training) ] 
+dim(training); dim(testing)
+```
+Further inspection shows that there are still a number of columns in the testing data set that have a lot of NA values.
+We will now filter out the columns that have 95% or more of their values set to NA in the reduced testing data set
+```{r}
+training <- training[, colSums(is.na(testing)) < .95*nrow(testing) ] 
+testing <- testing[, colSums(is.na(testing)) < .95*nrow(testing) ]
+dim(training); dim(testing)
+```
+We have now filtered the training and testing datasets down to 60 columns that do not have NAs.  The first 7
+columns are not directly related to the motion data and will also be removed so the prediction algorithm will work. 
+```{r}
+training<-training[,-1:-7] # remove columns not related to motion data
+testing<-testing[,-1:-7] # remove columns not related to motion data
+dim(training);dim(testing)
+```
+We have now filtered the training and testing datasets down to 53 columns of motion data with no NAs.
+# Create Validation Data  
+The reduced (no NAs) training dataset will be further partitioned into a second training and a validation dataset to be used for validation of
+the model.  Note that the original testing dataset will remain untouched and will not be used until the final predictions 
+are done. We will put 70% of this partitioned data into the second training dataset and the other 30% into the validation dataset.
+```{r}
+set.seed(12345) # make the results reproducible
+inTrain <- createDataPartition(training$classe, p=0.70, list=F)
+trainData <- training[inTrain, ]
+validationData <- training[-inTrain, ]
+dim(trainData); dim(validationData)
+```
+# Create Prediction Model 
+A random forest model with 3 fold cross validation will be created.  Random Forest was used because although it is 
+computationally intensive it is generally very accurate.  Validation was limited to 3 folds to decrease the computation 
+time.
+```{r}
+controlParams <- trainControl(method="cv",3)
+model <- train(classe ~ ., data=trainData, method="rf", trControl=controlParams) 
+model
+```
+# Model Validation  
+Predict the outcomes for the validation dataset and then create the confusion matrix to get an idea of the accuracy of 
+the predictions.  The confusion matrix as shown directly below looks very accurate.  Most points registered on the 
+diagoal (eg A vs A ).  There were a small number (less than 100) of cases where the predicted value differed from the 
+actual value in the validation dataset.  The overall accuracy of the model as indicated by the confusion matrix is 98.84%.  Conversly the out of sampe error rate for the validation data set = 100% - 98.84% = 1.16%
+```{r}
+prediction <- predict(model, validationData)
+confusionMatrix(validationData$classe, prediction)
+```
+
+# Evaluation  
+Use the model to predict outcomes for the original test dataset
+```{r}
+finalPrediction <- predict(model, testing[, -length(names(testing))]) #remove the problem_id field from the prediction
+finalPrediction
+```
+The model was subsequently compared to the origina test dataset.  It correctly predicted the outcome in all 20 cases.
